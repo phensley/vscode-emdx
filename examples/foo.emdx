@@ -1,0 +1,22 @@
+---
+id: foo
+title: bar
+---
+
+# Bar
+
+<foo>
+    <p className="baz">hi there</p>
+</bar>
+
+### Bar
+
+baz
+
+
+---
+id: bar
+title: baz
+---
+
+### baz

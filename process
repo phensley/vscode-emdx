@@ -1,0 +1,52 @@
+#!/usr/bin/env python3
+
+# download main markdown template and merge it into our 'emdx' template
+
+import json, os, sys
+from urllib import request
+
+CWD = os.path.dirname(os.path.abspath(__file__))
+TMPL = os.path.join(CWD, 'templates', 'emdx.tmLanguage.json')
+DEST = os.path.join(CWD, 'syntaxes', 'emdx.tmLanguage.json')
+MARKDOWN_URL = 'https://raw.githubusercontent.com/microsoft/vscode/master/extensions/markdown-basics/syntaxes/markdown.tmLanguage.json'
+
+WARN = {
+    '###-WARNING-###': 'This file was generated from a template! Edit the template!'
+}
+
+def main():
+    with request.urlopen(MARKDOWN_URL) as response:
+        md = json.load(response)
+
+        mdrepo = md['repository']
+        block = mdrepo['block']
+
+        # delete reference to separator
+        patterns = block['patterns']
+        patterns[:] = [p for p in patterns if p['include'] != '#separator']
+
+        # insert frontMatter pattern
+        ext = [dict(include='#frontMatter')]
+        mdrepo['block'] = dict(patterns=ext + patterns)
+
+        # merge into template
+        tmpl = json.load(open(TMPL, 'r'))
+        repo = tmpl['repository']
+        tmpl['repository'] = dict(**repo, **mdrepo)
+
+        # fix frontmatter pattern to match anywhere in the document
+        repo = tmpl['repository']
+        fm = repo['frontMatter']
+        fm['begin'] = fm['end'] = r'^-{3}\s*$'
+
+        # sort with warning at the top
+        tmpl = dict(**WARN, **tmpl)
+
+        # write result
+        out = open(DEST, 'w')
+        json.dump(tmpl, out, indent='  ')
+        out.close()
+
+if __name__ == '__main__':
+    main()
+
